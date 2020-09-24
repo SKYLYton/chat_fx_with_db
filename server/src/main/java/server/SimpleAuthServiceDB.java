@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleAuthServiceDB implements AuthService {
-    private class UserData {
+    public class UserData {
         String login;
         String password;
         String nickname;
@@ -21,18 +21,22 @@ public class SimpleAuthServiceDB implements AuthService {
         }
     }
 
-    private static Connection connection;
-    private static Statement stmt;
-    private static PreparedStatement psInsert;
+    private Connection connection;
+    private Statement stmt;
+    private PreparedStatement psInsert;
     List<UserData> users;
 
-    public static void connect() throws ClassNotFoundException, SQLException {
+    public List<UserData> getUsers() {
+        return users;
+    }
+
+    public void connect() throws ClassNotFoundException, SQLException {
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:main.db");
         stmt = connection.createStatement();
     }
 
-    private static void disconnect() {
+    private void disconnect() {
         try {
             stmt.close();
         } catch (SQLException e) {

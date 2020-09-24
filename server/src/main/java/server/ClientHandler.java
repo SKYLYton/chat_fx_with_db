@@ -34,6 +34,7 @@ public class ClientHandler {
                             if (token.length < 3) {
                                 continue;
                             }
+
                             String newNick = server
                                     .getAuthService()
                                     .getNicknameByLoginAndPassword(token[1], token[2]);
@@ -44,6 +45,7 @@ public class ClientHandler {
                                     sendMsg("/authok " + nickname);
                                     server.subscribe(this);
                                     System.out.println("Клиент " + nickname + " подключился");
+                                    out.writeUTF("/chathistory " + server.getMessageServiceDB().getMessages(this));
                                     server.broadcastServiceMsg(this, "Клиент " + nickname + " подключился");
                                     socket.setSoTimeout(0);
                                     break;
@@ -68,6 +70,7 @@ public class ClientHandler {
                             } else {
                                 sendMsg("/regno");
                             }
+
                         }
 
                     }
@@ -98,7 +101,7 @@ public class ClientHandler {
                                 }
                                 boolean b = server.getAuthService().changeNick(login, token[1]);
 
-                                if(b){
+                                if (b) {
                                     server.broadcastServiceMsg(this, nickname + " изменил ник на " + token[1]);
                                     nickname = token[1];
                                     server.broadcastClientList();
@@ -106,7 +109,6 @@ public class ClientHandler {
                                 } else {
                                     sendMsg("Никнейм неудалось изменить");
                                 }
-
                             }
 
                         } else {

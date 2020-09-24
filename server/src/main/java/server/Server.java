@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -11,6 +12,8 @@ import java.util.Vector;
 public class Server {
     private List<ClientHandler> clients;
     private AuthService authService;
+    private MessageServiceDB messageServiceDB;
+
 
     private int PORT = 8189;
     ServerSocket server = null;
@@ -19,6 +22,7 @@ public class Server {
     public Server() {
         clients = new Vector<>();
         authService = new SimpleAuthServiceDB();
+        messageServiceDB = new MessageServiceDB(this);
 
         try {
             server = new ServerSocket(PORT);
@@ -42,6 +46,10 @@ public class Server {
         }
     }
 
+    public MessageServiceDB getMessageServiceDB() {
+        return messageServiceDB;
+    }
+
     public AuthService getAuthService() {
         return authService;
     }
@@ -49,22 +57,25 @@ public class Server {
     public void broadcastMsg(ClientHandler sender, String msg) {
         SimpleDateFormat formater = new SimpleDateFormat("HH:mm:ss");
 
-        String message = String.format(" %s %s : %s", formater.format(new Date()), sender.getNickname(), msg);
+        String message = String.format("%s %s : %s", formater.format(new Date()), sender.getNickname(), msg);
         for (ClientHandler c : clients) {
             c.sendMsg(message);
         }
+
+        messageServiceDB.saveMsg(formater.format(new Date()), msg, sender.getLogin());
     }
 
     public void broadcastServiceMsg(ClientHandler sender, String msg) {
         SimpleDateFormat formater = new SimpleDateFormat("HH:mm:ss");
 
-        String message = String.format(" %s : %s", formater.format(new Date()), msg);
+        String message = String.format("%s : %s", formater.format(new Date()), msg);
         for (ClientHandler c : clients) {
             c.sendMsg(message);
         }
     }
 
     public void privateMsg(ClientHandler sender, String receiver, String msg) {
+        SimpleDateFormat formater = new SimpleDateFormat("HH:mm:ss");
         String message = String.format("[%s] private [%s] : %s", sender.getNickname(), receiver, msg);
         for (ClientHandler c : clients) {
             if (c.getNickname().equals(receiver)) {
@@ -72,6 +83,9 @@ public class Server {
                 if (!c.equals(sender)) {
                     sender.sendMsg(message);
                 }
+
+                messageServiceDB.savePrivateMsg(formater.format(new Date()), msg, c.getLogin(), sender.getLogin());
+
                 return;
             }
         }
@@ -109,6 +123,16 @@ public class Server {
         for (ClientHandler c : clients) {
             c.sendMsg(msg);
         }
+    }
+
+    public String getNickname(String login){
+        List<SimpleAuthServiceDB.UserData> list = ((SimpleAuthServiceDB) getAuthService()).getUsers();
+        for (int i = 0; i < list.size();i++) {
+            if(list.get(i).login.equals(login)){
+                return list.get(i).nickname;
+            }
+        }
+        return "";
     }
 
 }

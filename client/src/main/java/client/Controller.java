@@ -158,6 +158,11 @@ public class Controller implements Initializable {
                                     setTitle(nickname);
                                 }
 
+                                if (str.startsWith("/chathistory ")) {
+                                    String[] token = str.split("\\s+", 2);
+                                    textArea.appendText(token[1]);
+                                }
+
                             } else {
                                 textArea.appendText(str + "\n");
                             }
