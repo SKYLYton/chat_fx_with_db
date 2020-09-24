@@ -18,7 +18,7 @@ public class Server {
 
     public Server() {
         clients = new Vector<>();
-        authService = new SimpleAuthService();
+        authService = new SimpleAuthServiceDB();
 
         try {
             server = new ServerSocket(PORT);
@@ -55,6 +55,15 @@ public class Server {
         }
     }
 
+    public void broadcastServiceMsg(ClientHandler sender, String msg) {
+        SimpleDateFormat formater = new SimpleDateFormat("HH:mm:ss");
+
+        String message = String.format(" %s : %s", formater.format(new Date()), msg);
+        for (ClientHandler c : clients) {
+            c.sendMsg(message);
+        }
+    }
+
     public void privateMsg(ClientHandler sender, String receiver, String msg) {
         String message = String.format("[%s] private [%s] : %s", sender.getNickname(), receiver, msg);
         for (ClientHandler c : clients) {
@@ -81,7 +90,6 @@ public class Server {
         broadcastClientList();
     }
 
-
     public boolean isLoginAuthenticated(String login) {
         for (ClientHandler c : clients) {
             if (c.getLogin().equals(login)) {
@@ -91,7 +99,7 @@ public class Server {
         return false;
     }
 
-    private void broadcastClientList() {
+    public void broadcastClientList() {
         StringBuilder sb = new StringBuilder("/clientlist ");
         for (ClientHandler c : clients) {
             sb.append(c.getNickname()).append(" ");

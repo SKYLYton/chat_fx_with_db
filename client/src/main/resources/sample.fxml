@@ -1,28 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox fx:controller="client.Controller"
-      xmlns:fx="http://javafx.com/fxml" alignment="center">
 
-    <HBox fx:id="authPanel" visible="true" managed="true">
-        <TextField fx:id="loginField" promptText="login" HBox.hgrow="ALWAYS"/>
-        <PasswordField fx:id="passwordField" promptText="password" HBox.hgrow="ALWAYS"
-                       onAction="#tryToAuth"/>
-        <Button text="auth" onAction="#tryToAuth" minWidth="50"/>
-        <Button text="reg" onAction="#registration" minWidth="50"/>
+<VBox alignment="center" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.Controller">
+
+    <HBox fx:id="authPanel" managed="false" visible="false">
+        <TextField fx:id="loginField" promptText="login" HBox.hgrow="ALWAYS" />
+        <PasswordField fx:id="passwordField" onAction="#tryToAuth" promptText="password" HBox.hgrow="ALWAYS" />
+        <Button minWidth="50" onAction="#tryToAuth" text="auth" />
+        <Button minWidth="50" onAction="#registration" text="reg" />
     </HBox>
 
     <HBox VBox.vgrow="ALWAYS">
-        <TextArea fx:id="textArea" HBox.hgrow="ALWAYS" editable="false" wrapText="true"/>
-        <ListView fx:id="clientList" visible="false" managed="false" minWidth="50"
-        onMouseClicked="#clickClientList"
-        />
+        <TextArea fx:id="textArea" editable="false" wrapText="true" HBox.hgrow="ALWAYS" />
+      <VBox fx:id="listPanel" managed="true" minWidth="50" visible="true">
+         <children>
+            <TextField fx:id="nickField">
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </TextField>
+            <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#changeNick" prefHeight="25.0" text="Изменить никнейм">
+               <VBox.margin>
+                  <Insets bottom="8.0" top="8.0" />
+               </VBox.margin>
+            </Button>
+              <ListView fx:id="clientList" onMouseClicked="#clickClientList" />
+         </children>
+      </VBox>
     </HBox>
 
 
-    <HBox fx:id="msgPanel" visible="false" managed="false">
-        <TextField fx:id="textField" promptText="input message" HBox.hgrow="ALWAYS"
-                   onAction="#sendMsg"/>
-        <Button text="send" onAction="#sendMsg"/>
+    <HBox fx:id="msgPanel" managed="true" visible="true">
+        <TextField fx:id="textField" onAction="#sendMsg" promptText="Введите сообщение" HBox.hgrow="ALWAYS" />
+        <Button onAction="#sendMsg" text="send" />
     </HBox>
 
 </VBox>
