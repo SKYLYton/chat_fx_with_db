@@ -14,6 +14,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -40,10 +41,13 @@ public class Controller implements Initializable {
     public HBox msgPanel;
     @FXML
     public ListView<String> clientList;
+    @FXML
+    public VBox listPanel;
+    @FXML
+    public TextField nickField;
 
     private final String IP_ADDRESS = "localhost";
     private final int PORT = 8189;
-
 
     private Socket socket;
     DataInputStream in;
@@ -51,23 +55,25 @@ public class Controller implements Initializable {
 
     private boolean authenticated;
     private String nickname;
+    private String login;
     private final String TITLE = "Флудилка";
 
     private Stage stage;
     private Stage regStage;
     private RegController regController;
-
+    private ServiceMessagesHistory serviceMessagesHistory;
     public void setAuthenticated(boolean authenticated) {
         this.authenticated = authenticated;
         authPanel.setVisible(!authenticated);
         authPanel.setManaged(!authenticated);
         msgPanel.setVisible(authenticated);
         msgPanel.setManaged(authenticated);
-        clientList.setVisible(authenticated);
-        clientList.setManaged(authenticated);
+        listPanel.setVisible(authenticated);
+        listPanel.setManaged(authenticated);
 
         if (!authenticated) {
             nickname = "";
+            serviceMessagesHistory.close();
         }
         textArea.clear();
         setTitle(nickname);
@@ -76,6 +82,7 @@ public class Controller implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        serviceMessagesHistory = new ServiceMessagesHistory();
         setAuthenticated(false);
         createRegWindow();
         Platform.runLater(() -> {
@@ -117,6 +124,8 @@ public class Controller implements Initializable {
                             if (str.startsWith("/authok")) {
                                 nickname = str.split(" ", 2)[1];
                                 setAuthenticated(true);
+                                serviceMessagesHistory.open(loginField.getText().toLowerCase().trim());
+                                textArea.setText(serviceMessagesHistory.getLastMessage());
                                 break;
                             }
 
@@ -147,8 +156,21 @@ public class Controller implements Initializable {
                                         }
                                     });
                                 }
+
+                                if (str.startsWith("/changenick ")) {
+                                    String[] token = str.split("\\s+", 2);
+                                    nickname = token[1];
+                                    setTitle(nickname);
+                                }
+
+                                if (str.startsWith("/chathistory ")) {
+                                    String[] token = str.split("\\s+", 2);
+                                    textArea.appendText(token[1]);
+                                }
+
                             } else {
                                 textArea.appendText(str + "\n");
+                                serviceMessagesHistory.writeLine(str);
                             }
                         }
                     } catch (RuntimeException e) {
@@ -173,6 +195,9 @@ public class Controller implements Initializable {
     }
 
     public void sendMsg(ActionEvent actionEvent) {
+        if(textField.getText().isEmpty()){
+           return;
+        }
         try {
             out.writeUTF(textField.getText());
             textField.clear();
@@ -192,6 +217,8 @@ public class Controller implements Initializable {
                     passwordField.getText().trim()));
             passwordField.clear();
 
+            login = loginField.getText().trim().toLowerCase();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -205,7 +232,9 @@ public class Controller implements Initializable {
 
     public void clickClientList(MouseEvent mouseEvent) {
         String receiver = clientList.getSelectionModel().getSelectedItem();
-        textField.setText("/w " + receiver + " ");
+        if(receiver != null && !receiver.isEmpty()) {
+            textField.setText("/w " + receiver + " ");
+        }
     }
 
     private void createRegWindow() {
@@ -232,6 +261,27 @@ public class Controller implements Initializable {
 
     public void tryToReg(String login, String password, String nickname) {
         String msg = String.format("/reg %s %s %s", login, password, nickname);
+
+        if (socket == null || socket.isClosed()) {
+            connect();
+        }
+
+        try {
+            out.writeUTF(msg);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        System.out.println(msg);
+    }
+
+    public void changeNick(ActionEvent actionEvent) {
+        String msg = String.format("/changenick %s", nickField.getText().replaceAll(" ", ""));
+
+        if(nickname.equals(nickField.getText().replaceAll(" ", "")) || nickField.getText().isEmpty()){
+            return;
+        }
 
         if (socket == null || socket.isClosed()) {
             connect();

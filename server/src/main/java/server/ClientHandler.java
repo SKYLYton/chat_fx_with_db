@@ -24,7 +24,7 @@ public class ClientHandler {
 
             new Thread(() -> {
                 try {
-                    socket.setSoTimeout(5000);
+                    socket.setSoTimeout(150000);
                     //цикл аутентификации
                     while (true) {
                         String str = in.readUTF();
@@ -34,6 +34,7 @@ public class ClientHandler {
                             if (token.length < 3) {
                                 continue;
                             }
+
                             String newNick = server
                                     .getAuthService()
                                     .getNicknameByLoginAndPassword(token[1], token[2]);
@@ -44,6 +45,10 @@ public class ClientHandler {
                                     sendMsg("/authok " + nickname);
                                     server.subscribe(this);
                                     System.out.println("Клиент " + nickname + " подключился");
+
+                                    //out.writeUTF("/chathistory " + server.getServiceDB().getMessages(this));
+
+                                    server.broadcastServiceMsg(this, "Клиент " + nickname + " подключился");
                                     socket.setSoTimeout(0);
                                     break;
                                 } else {
@@ -67,6 +72,7 @@ public class ClientHandler {
                             } else {
                                 sendMsg("/regno");
                             }
+
                         }
 
                     }
@@ -79,6 +85,7 @@ public class ClientHandler {
                             System.out.println(str);
                             if (str.equals("/end")) {
                                 out.writeUTF("/end");
+                                server.broadcastServiceMsg(this, "Клиент " + nickname + " отключился");
                                 break;
                             }
                             if (str.startsWith("/w")) {
@@ -88,6 +95,24 @@ public class ClientHandler {
                                 }
                                 server.privateMsg(this, token[1], token[2]);
                             }
+
+                            if (str.startsWith("/changenick")) {
+                                String[] token = str.split("\\s+", 2);
+                                if (token.length < 2) {
+                                    continue;
+                                }
+                                boolean b = server.getAuthService().changeNick(this, login, token[1]);
+
+                                if (b) {
+                                    server.broadcastServiceMsg(this, nickname + " изменил ник на " + token[1]);
+                                    nickname = token[1];
+                                    server.broadcastClientList();
+                                    out.writeUTF("/changenick " + nickname);
+                                } else {
+                                    sendMsg("Никнейм неудалось изменить");
+                                }
+                            }
+
                         } else {
                             server.broadcastMsg(this, str);
                         }
