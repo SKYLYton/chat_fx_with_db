@@ -55,12 +55,13 @@ public class Controller implements Initializable {
 
     private boolean authenticated;
     private String nickname;
+    private String login;
     private final String TITLE = "Флудилка";
 
     private Stage stage;
     private Stage regStage;
     private RegController regController;
-
+    private ServiceMessagesHistory serviceMessagesHistory;
     public void setAuthenticated(boolean authenticated) {
         this.authenticated = authenticated;
         authPanel.setVisible(!authenticated);
@@ -72,6 +73,7 @@ public class Controller implements Initializable {
 
         if (!authenticated) {
             nickname = "";
+            serviceMessagesHistory.close();
         }
         textArea.clear();
         setTitle(nickname);
@@ -80,6 +82,7 @@ public class Controller implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        serviceMessagesHistory = new ServiceMessagesHistory();
         setAuthenticated(false);
         createRegWindow();
         Platform.runLater(() -> {
@@ -121,6 +124,8 @@ public class Controller implements Initializable {
                             if (str.startsWith("/authok")) {
                                 nickname = str.split(" ", 2)[1];
                                 setAuthenticated(true);
+                                serviceMessagesHistory.open(loginField.getText().toLowerCase().trim());
+                                textArea.setText(serviceMessagesHistory.getLastMessage());
                                 break;
                             }
 
@@ -165,6 +170,7 @@ public class Controller implements Initializable {
 
                             } else {
                                 textArea.appendText(str + "\n");
+                                serviceMessagesHistory.writeLine(str);
                             }
                         }
                     } catch (RuntimeException e) {
@@ -210,6 +216,8 @@ public class Controller implements Initializable {
             out.writeUTF(String.format("/auth %s %s", loginField.getText().trim().toLowerCase(),
                     passwordField.getText().trim()));
             passwordField.clear();
+
+            login = loginField.getText().trim().toLowerCase();
 
         } catch (IOException e) {
             e.printStackTrace();
