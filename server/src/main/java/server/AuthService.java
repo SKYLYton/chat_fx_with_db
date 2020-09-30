@@ -9,5 +9,5 @@ public interface AuthService {
 
     boolean registration(String login, String password, String nickname);
 
-    boolean changeNick(String oldNick, String newNick);
+    boolean changeNick(ClientHandler clientHandler, String oldNick, String newNick);
 }

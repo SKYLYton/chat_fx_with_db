@@ -45,7 +45,9 @@ public class ClientHandler {
                                     sendMsg("/authok " + nickname);
                                     server.subscribe(this);
                                     System.out.println("Клиент " + nickname + " подключился");
-                                    out.writeUTF("/chathistory " + server.getMessageServiceDB().getMessages(this));
+
+                                    //out.writeUTF("/chathistory " + server.getServiceDB().getMessages(this));
+
                                     server.broadcastServiceMsg(this, "Клиент " + nickname + " подключился");
                                     socket.setSoTimeout(0);
                                     break;
@@ -99,7 +101,7 @@ public class ClientHandler {
                                 if (token.length < 2) {
                                     continue;
                                 }
-                                boolean b = server.getAuthService().changeNick(login, token[1]);
+                                boolean b = server.getAuthService().changeNick(this, login, token[1]);
 
                                 if (b) {
                                     server.broadcastServiceMsg(this, nickname + " изменил ник на " + token[1]);

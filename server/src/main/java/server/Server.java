@@ -3,8 +3,8 @@ package server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -12,7 +12,7 @@ import java.util.Vector;
 public class Server {
     private List<ClientHandler> clients;
     private AuthService authService;
-    private MessageServiceDB messageServiceDB;
+    private ServiceDB serviceDB;
 
 
     private int PORT = 8189;
@@ -21,12 +21,13 @@ public class Server {
 
     public Server() {
         clients = new Vector<>();
-        authService = new SimpleAuthServiceDB();
-        messageServiceDB = new MessageServiceDB(this);
+        serviceDB = new ServiceDB();
+        authService = new SimpleAuthServiceDB(serviceDB);
 
         try {
             server = new ServerSocket(PORT);
             System.out.println("Сервер запущен");
+            serviceDB.connect();
 
             while (true) {
                 socket = server.accept();
@@ -35,19 +36,20 @@ public class Server {
                 new ClientHandler(this, socket);
             }
 
-        } catch (IOException e) {
+        } catch (IOException | SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {
             try {
                 server.close();
+                serviceDB.disconnect();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public MessageServiceDB getMessageServiceDB() {
-        return messageServiceDB;
+    public ServiceDB getServiceDB() {
+        return serviceDB;
     }
 
     public AuthService getAuthService() {
@@ -62,7 +64,7 @@ public class Server {
             c.sendMsg(message);
         }
 
-        messageServiceDB.saveMsg(formater.format(new Date()), msg, sender.getLogin());
+        serviceDB.saveMsg(formater.format(new Date()), msg, "null", sender.getNickname());
     }
 
     public void broadcastServiceMsg(ClientHandler sender, String msg) {
@@ -84,7 +86,7 @@ public class Server {
                     sender.sendMsg(message);
                 }
 
-                messageServiceDB.savePrivateMsg(formater.format(new Date()), msg, c.getLogin(), sender.getLogin());
+                serviceDB.saveMsg(formater.format(new Date()), msg, c.getNickname(), sender.getNickname());
 
                 return;
             }
@@ -123,16 +125,6 @@ public class Server {
         for (ClientHandler c : clients) {
             c.sendMsg(msg);
         }
-    }
-
-    public String getNickname(String login){
-        List<SimpleAuthServiceDB.UserData> list = ((SimpleAuthServiceDB) getAuthService()).getUsers();
-        for (int i = 0; i < list.size();i++) {
-            if(list.get(i).login.equals(login)){
-                return list.get(i).nickname;
-            }
-        }
-        return "";
     }
 
 }
